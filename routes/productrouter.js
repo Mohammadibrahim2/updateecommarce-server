@@ -1,27 +1,28 @@
-const express = require("express")
+ express = require("express")
 const router = express.Router()
 const mongoose = require("mongoose");
 const fs = require("fs");
 const formidableMiddleware = require('express-formidable');
 const { default: slugify } = require("slugify");
-var braintree = require("braintree");
+
+const SSLCommerzPayment = require('sslcommerz-lts')
 const productSchema = require("../models/Product");
 // const checklogin = require("../helpers/authjwt");
 
 const categorySchema = require("../models/Category");
 const orderSchema = require("../models/Order");
+const { ObjectId } = require("mongodb");
 
 
 const Product = new mongoose.model("Product", productSchema);
 const Order= new mongoose.model("Order",orderSchema);
+
 //payment getway:-
-var gateway = new braintree.BraintreeGateway({
-    environment: braintree.Environment.Sandbox,
-    merchantId: "vsn2f5v26psz6cqh",
-    publicKey: "8fpgfsbgcccv7qpg",
-    privateKey: "2f66eac7511f63883ebfcdd8300473a2",
-  });
+const store_id = 'fishn66771ca59bfab'
+const store_passwd = 'fishn66771ca59bfab@ssl'
+const is_live = false //true for live, false for sandbox
   //payment getway:-
+
 //successfully done the create router:
 router.post("/create-product",formidableMiddleware(), async(req, res) => {
 // console.log(req)
@@ -231,55 +232,96 @@ router.delete("/delete-product/:id", async (req, res) => {
 });
 //payment 
 //get token
-router.get("/brainTree/token",async(req,res)=>{
+router.post("/order",async(req,res)=>{
+    const tran_id=new ObjectId().toString()
+
     try{
-        gateway.clientToken.generate({}, function(err,response){
-            if(err){
-                res.status(500).send(err)
-            }
-            else{
-                res.send(response)
-            }
+        const {cart,user}=req.body;
+        
+       
+        let total=0
+        cart.map((i)=>{
+         total=total +i.price
         })
+        const data = {
+            total_amount: total,
+            currency: 'BDT',
+            tran_id: tran_id, // use unique tran_id for each api call
+            success_url: `http://localhost:8000/product/payment/success/${tran_id}`,
+            fail_url: 'http://localhost:3030/fail',
+            cancel_url: 'http://localhost:3030/cancel',
+            ipn_url: 'http://localhost:3030/ipn',
+            shipping_method: 'Courier',
+            product_name: 'Computer.',
+            product_category: 'Electronic',
+            product_profile: 'general',
+            cus_name: user.firstName,
+            cus_email: user.email,
+            cus_add1: 'Dhaka',
+            cus_add2: 'Dhaka',
+            cus_city: 'Dhaka',
+            cus_state: 'Dhaka',
+            cus_postcode: '1000',
+            cus_country: 'Bangladesh',
+            cus_phone: '01711111111',
+            cus_fax: '01711111111',
+            ship_name: 'Customer Name',
+            ship_add1: 'Dhaka',
+            ship_add2: 'Dhaka',
+            ship_city: 'Dhaka',
+            ship_state: 'Dhaka',
+            ship_postcode: 1000,
+            ship_country: 'Bangladesh',
+        };
+
+       
+      
+        const sslcz = new SSLCommerzPayment(store_id, store_passwd, is_live)
+        sslcz.init(data).then(apiResponse => {
+            // Redirect the user to payment gateway
+            let GatewayPageURL = apiResponse.GatewayPageURL
+            res.send({url:GatewayPageURL});
+            //save an order:-
+            const order=new Order({
+                        products:cart,
+                        paymetStatus:false,
+                        buyer:user._id,
+                        tranId:tran_id,
+                        totalAmount: total,
+                
+                    }).save()
+            // console.log('Redirecting to: ', GatewayPageURL)
+          
+        });
+        router.post("/payment/success/:tranId",async(req,res)=>{
+            console.log(req.params.tranId)
+    //        const result=await Order.findByIdAndUpdate({
+    //         tranId:req.params.tranId
+    //        },{
+    //         $set:{
+    //             paymetStatus:true,
+    //         }
+    //        },{new:true}
+    //   ) 
+      if(req.params.tranId){
+        res.redirect(`http://localhost:3000/dashboard/users-orders/${req.params.tranId}`)
+      }
+    
+       
+        
+    })
+      
+
+
+        
+
     }
     catch(err){
         console.log(err)
     }
 });
+
 //payment getway router
-router.post("brainTree/payment",async(req,res)=>{
-    try{
-   const {cart,nonce}=req.body;
-   let total=0
-   cart.map((i)=>{
-    total=total +i.price
-   })
 
-   let newTransation=gateway.transaction.sale({
-    amount:total,
-    paymentMethodNonce:nonce,
-    options: {
-        submitForSettlement: true,
-      },
-   },
-   function (error,result){
-if(result){
-    const order=new Order({
-        products:cart,
-        payment:result,
-        buyer:req.user._id
 
-    }).save()
-    res.json({ok:true})
-}
-else{
-    res.status(500).send(error)
-}
-}
-)
-    }
-    catch(err){
-        console.log(err)
-    }
-})
 module.exports = router;

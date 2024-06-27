@@ -31,7 +31,7 @@ app.use(express.json())
 
 
 const productRouter=require("./routes/productrouter");
-// const orderRouter=require("./routes/orderrouter");
+const orderRouter=require("./routes/orderrouter");
 const userRouter=require("./routes/userrouter");
 const categoryRouter=require("./routes/categoryrouter");
 // const subcategoryRouter=require("./routes/subcategoryrouter");
@@ -40,7 +40,8 @@ const categoryRouter=require("./routes/categoryrouter");
 // app.use(authJwt)
 
 //connection withe db:-
-const uri ="mongodb+srv://mohammadibrahim6454:Bm0asUCcjBmEPbKl@cluster0.25qr4ok.mongodb.net/"
+
+const uri ="mongodb+srv://mohammadibrahim6454:Bm0asUCcjBmEPbKl@cluster0.25qr4ok.mongodb.net/test"
 
 
 // const client = new MongoClient(uri, { useNewUrlParser: true,
@@ -66,7 +67,7 @@ async function run(){
 
 
 app.use("/product",productRouter)
-// app.use("/order",orderRouter)
+app.use("/order",orderRouter)
 app.use("/user",userRouter)
 app.use("/category",categoryRouter)
 // app.use("/subcategory",subcategoryRouter)
