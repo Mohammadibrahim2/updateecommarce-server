@@ -30,7 +30,12 @@ const orderSchema= mongoose.Schema({
 },
 tranId:{
     type:String
-}
+},
+  createdAt:{
+        type: Date, 
+        required: true, 
+        default: Date.now
+     },
    
 });
 orderSchema.virtual('id').get(function (){

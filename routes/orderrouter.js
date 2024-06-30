@@ -35,35 +35,17 @@ catch(err){
 });
 //Deleting an order:-
 router.delete("/delete-order/:id", async (req, res) => {
-    const order= await Order.deleteOne({ _id: req.params.id }
-
-    )
-
-    res.status(201).send({
+   try{
+    console.log(req.params.id)
+    const order= await Order.deleteOne({ _id:req.params.id })
+     res.status(201).send({
         message:"successfully deleted the order",
-    
         success:true
     })
+   }catch(err){console.log(err)}
 
 });
-//getting photo:- Api is okay
-// router.get("/product-photo/:id", async (req, res) => {
 
-//     try {
-//         const productPhoto = await Product.findById(req.params.id).select("photo")
-//         if (productPhoto.photo.data) {
-//             res.set('Content-Type', productPhoto.photo.contenttype)
-//             return res.status(201).send(productPhoto.photo.data)
-//         }
-
-//     }
-//     catch (error) {
-//         res.send({
-//             error: error,
-//             message: "there is an error"
-//         })
-//     }
-// });
 
 //get all orders:-
 router.get("/",async(req,res)=>{

@@ -14,9 +14,14 @@ const reviewSchema= mongoose.Schema({
         ref:"User",
    },
 
-   
+   photo: {
+    data: Buffer,
+    contentType: String
+
+},
  description:{
     type:String,
+    required:true
     
  }
    

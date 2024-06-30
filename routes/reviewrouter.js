@@ -20,20 +20,17 @@ const Review= new mongoose.model("Review",reviewSchema);
 
 
 router.post("/create-review",formidableMiddleware(), async(req, res) => {
-    // console.log(req)
-        const { product, description,user  } = req.fields;
-        const { photo } = req.files;
+   
+        const { products, description,user  } = req.fields;
+      
  
         const review= new Review({ ...req.fields })
-        if (photo) {
-            review.photo.data = fs.readFileSync(photo.path)
-            review.photo.contentType = photo.type
-        }
     await review.save() 
     res.status(201).send({
         success:true,
         message:"Your Review is Created Successfully !",
     })
+
     if (!review)
         return res.status(400).send({
     success:false,
@@ -43,20 +40,20 @@ router.post("/create-review",formidableMiddleware(), async(req, res) => {
 //create a review:-
 //get all reviews:-
 router.get("/get-reviews",  async(req,res)=>{
-    const review = await Review.find().sort({createdAt:-1})
+    const review = await Review.find().select('-photo').sort({createdAt:-1})
        
     res.send(review)
      
 });
 //get all reviews:-
 //get data from db :-
-router.get("/get-userReview/:id", async (req, res) => {
+router.get("/get-reviews/:id", async (req, res) => {
 try{
         
-    const review= await Review.findOne({user:req.params.id}).populate("products","name").populate("user","firstName").select('-photo').sort("-createdAt")
+    const reviews= await Review.find({products:req.params.id}).populate("products","name").populate("user","firstName").select('-photo').sort("-createdAt")
 
     
-        res.send({review})
+        res.send(reviews)
 }
 catch(err){
     console.log(err)

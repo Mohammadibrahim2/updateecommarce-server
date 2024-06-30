@@ -24,6 +24,11 @@ const productSchema= mongoose.Schema({
         ref:"Category",
         required:true
     },
+    featuredCategory:{
+        type:mongoose.ObjectId,
+        ref:"FeaturedCategory",
+        required:true
+    },
     // countInStock:{
     // type:Number
     // },
@@ -32,19 +37,16 @@ const productSchema= mongoose.Schema({
     //     required: true, 
     //     default: Date.now
     // },
-    // rating:{
-    //     type:Number
-    // },
+    quantity:{
+        type:Number,
+        required:true
+    },
     photo: {
         data: Buffer,
         contentType: String
 
     },
-    // subcategory:{
-    //     type:mongoose.ObjectId,
-    //     ref:"SubCategory",
-    //     required:true
-    // }
+   
 
    
 })

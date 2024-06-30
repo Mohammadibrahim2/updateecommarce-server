@@ -1,16 +1,14 @@
 const mongoose=require("mongoose")
 
-const categorySchema=mongoose.Schema({
-   
-   name:{
+const feturedcategorySchema=mongoose.Schema({
+    name:{
         type:String,
         requried:true
         
     },
-  
     slug:{
         type:String,
-        
+        requried:true
     },
 
     createdAt:{
@@ -20,4 +18,4 @@ const categorySchema=mongoose.Schema({
     },
 })
 
-module.exports=categorySchema;
+module.exports=feturedcategorySchema;

@@ -13,16 +13,21 @@ const Category = new mongoose.model("Category", categorySchema);
 router.post("/create-category",async(req,res)=>{
 
     const {name}=req.body
+    
     console.log(name)
     
-        const category= new  Category({
-           name:name,
+        const createdCategory= new Category({
+          
+          name:name,
           slug:slugify(name)
           
         })
           
-           const result=await  category.save()
-         res.status(201).send(result)
+           const result=await createdCategory.save()
+         res.status(201).send({
+          message:"successfully created a category",
+          result
+         })
        
        });
 
@@ -37,6 +42,27 @@ router.get("/get-categories",async(req,res)=>{
       categories
     })
 
+//deleting data:
+
+router.delete("/delete-category/:id", async (req, res) => {
+  try{
+      console.log(req.params.id)
+      const result= await Category.deleteOne({ _id: req.params.id }
+
+      )
+  
+      res.status(201).send({
+          message:"successfully deleted the featured category",
+          result,
+          success:true
+      })
+  }
+  catch(err){
+      res.send(err)
+      console.log(err)
+  }
+
+});
 
 
 })

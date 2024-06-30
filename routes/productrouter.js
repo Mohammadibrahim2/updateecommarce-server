@@ -8,7 +8,7 @@ const { default: slugify } = require("slugify");
 const SSLCommerzPayment = require('sslcommerz-lts')
 const productSchema = require("../models/Product");
 // const checklogin = require("../helpers/authjwt");
-
+const feturedcategorySchema= require('../models/FeaturedCategory')
 const categorySchema = require("../models/Category");
 const orderSchema = require("../models/Order");
 const { ObjectId } = require("mongodb");
@@ -16,6 +16,8 @@ const { ObjectId } = require("mongodb");
 
 const Product = new mongoose.model("Product", productSchema);
 const Order= new mongoose.model("Order",orderSchema);
+const Category= new mongoose.model("Category",categorySchema);
+const FeaturedCategory= new mongoose.model("FeaturedCategory", feturedcategorySchema);
 
 //payment getway:-
 const store_id = 'fishn66771ca59bfab'
@@ -26,19 +28,23 @@ const is_live = false //true for live, false for sandbox
 //successfully done the create router:
 router.post("/create-product",formidableMiddleware(), async(req, res) => {
 // console.log(req)
-    const { name, description, price,brand,category } = req.fields;
+    const {  quantity,name, description, price,brand,category,featuredCategory} = req.fields;
     const { photo } = req.files;
     switch (true) {
         case !name:
             return res.status(500).send({ error: "name is requried" });
         case !category:
             return res.status(500).send({ error: "category is requried" });
+        case !featuredCategory:
+            return res.status(500).send({ error: "featuredCategory is requried" });
         case !description:
             return res.status(500).send({ error: "description is requried" });
          case !price:
             return res.status(500).send({ error: "price is requried" });
          case !brand:
             return res.status(500).send({ error: "brand requried" });
+         case !quantity:
+            return res.status(500).send({ error: "quantity requried" });
 
         case photo && photo.size > 2000000:
             return res.status(500).send({ error: "photo is requried and should be lezz than 1mb" });
@@ -126,10 +132,24 @@ router.get("/product-category/:slug", async (req, res) => {
     catch (error) {
         console.log(error)
     }
+})
+router.get("/get-featured-products/:slug", async (req, res) => {
+    try {
+        const value = req.params.slug
 
+    
 
+        const featuredCategory = await FeaturedCategory.findOne({ slug: value });
 
+        const products = await Product.find({ featuredCategory}).populate("featuredCategory").select('-photo')
 
+        res.send({ products, featuredCategory })
+
+    }
+
+    catch (error) {
+        console.log(error)
+    }
 })
 // Get single product api is done.
 router.get("/get-singleproduct/:id", async (req, res) => {
@@ -157,7 +177,7 @@ router.get("/get-singleproduct/:id", async (req, res) => {
 router.get("/related-products/:pid/:cid", async (req, res) => {
     try {
         const {pid,cid}=req.params
-        console.log(pid,cid)
+       
         const products = await Product.find(
           {  category:cid,
             _id:{ $ne:pid }
@@ -230,13 +250,31 @@ router.delete("/delete-product/:id", async (req, res) => {
     })
 
 });
+//get featured product:-
+router.get("/featured-product/:slug",async(req,res)=>{
+    
+    try {
+        const value=req.params.slug
+   
+        const feturedCategory = await FeaturedCategory.findOne({ slug: value })
+        const products = await Product.find({feturedCategory}).populate("feturedCategory")
+
+        res.send({ products, feturedCategory })
+
+    }
+
+    catch (error) {
+        console.log(error)
+    }
+
+})
 //payment 
 //get token
 router.post("/order",async(req,res)=>{
     const tran_id=new ObjectId().toString()
 
     try{
-        const {cart,user}=req.body;
+        const {cart,user,wholePrice}=req.body;
         
        
         let total=0
@@ -244,7 +282,7 @@ router.post("/order",async(req,res)=>{
          total=total +i.price
         })
         const data = {
-            total_amount: total,
+            total_amount: wholePrice,
             currency: 'BDT',
             tran_id: tran_id, // use unique tran_id for each api call
             success_url: `http://localhost:8000/product/payment/success/${tran_id}`,
@@ -255,15 +293,15 @@ router.post("/order",async(req,res)=>{
             product_name: 'Computer.',
             product_category: 'Electronic',
             product_profile: 'general',
-            cus_name: user.firstName,
-            cus_email: user.email,
-            cus_add1: 'Dhaka',
+            cus_name: user?.firstName,
+            cus_email: user?.email,
+            cus_add1: user?.adress,
             cus_add2: 'Dhaka',
             cus_city: 'Dhaka',
             cus_state: 'Dhaka',
             cus_postcode: '1000',
             cus_country: 'Bangladesh',
-            cus_phone: '01711111111',
+            cus_phone: user?.phone,
             cus_fax: '01711111111',
             ship_name: 'Customer Name',
             ship_add1: 'Dhaka',
@@ -287,22 +325,26 @@ router.post("/order",async(req,res)=>{
                         paymetStatus:false,
                         buyer:user._id,
                         tranId:tran_id,
-                        totalAmount: total,
+                        totalAmount: wholePrice,
                 
                     }).save()
-            // console.log('Redirecting to: ', GatewayPageURL)
+            
           
         });
         router.post("/payment/success/:tranId",async(req,res)=>{
-            console.log(req.params.tranId)
-    //        const result=await Order.findByIdAndUpdate({
-    //         tranId:req.params.tranId
-    //        },{
-    //         $set:{
-    //             paymetStatus:true,
-    //         }
-    //        },{new:true}
-    //   ) 
+         
+            const order=await Order.findOne({tranId:req.params.tranId})
+            const result=await Order.findByIdAndUpdate(req.params.id
+                ,{
+                 $set:{
+                     paymetStatus:true
+                    },
+                   
+                  },{new:true}
+             ) 
+      
+     
+      
       if(req.params.tranId){
         res.redirect(`http://localhost:3000/dashboard/users-orders/${req.params.tranId}`)
       }
