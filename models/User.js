@@ -19,7 +19,7 @@ const userSchema= mongoose.Schema({
         required:true
       
     },
-   passwordHash:{
+    passwordHash:{
         type:String,
         required:true
     },
@@ -36,9 +36,7 @@ const userSchema= mongoose.Schema({
     phone:{
         type:Number
     },
-    // country:{
-    //     type:String
-    // }
+   
 
    
 })

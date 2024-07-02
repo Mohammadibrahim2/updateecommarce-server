@@ -14,26 +14,33 @@ dotenv.config()
 router.post("/register",async(req,res)=>{
    
     try{
+       
         let user = User({
             firstName:req.body.firstName,
             lastName:req.body.lastName,
             email:req.body.email,
             phone:req.body.phone,
             passwordHash:bcrypt.hashSync(req.body.password,10),
-            isAdmin:req.body.isAdmin
+            isAdmin:req.body.isAdmin,
+            adress:req.body.adress
          })
          
             newuser=await user.save()
+           
             if(!newuser)
              return res.status(400).send("the user can not be created")
       
           let registedUser= newuser
-          res.status(201).send(registedUser)
+          res.status(201).send({
+            registedUser:registedUser,
+            message:"successfully register",
+            success:true
+          })
           
     }
 
     catch(error){
-        res.send(error)
+        console.log(error)
     }
    
    });
@@ -122,6 +129,7 @@ router.post('/login',async(req,res)=>{
     const secret=process.env.SECRET
     try{
         const {email,password}=req.body
+        console.log(email,password)
         //validation:
         if(!email || !password){
             return res.status(404).send({
