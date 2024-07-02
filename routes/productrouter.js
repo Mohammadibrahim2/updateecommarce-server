@@ -346,7 +346,7 @@ router.post("/order",async(req,res)=>{
      
       
       if(req.params.tranId){
-        res.redirect(`http://localhost:3000/dashboard/users-orders/${req.params.tranId}`)
+        res.redirect(`https://fishnfry.netlify.app/dashboard/users-orders/${req.params.tranId}`)
       }
     
        
