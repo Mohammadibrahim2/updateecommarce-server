@@ -35,6 +35,7 @@ const orderRouter=require("./routes/orderrouter");
 const userRouter=require("./routes/userrouter");
 const categoryRouter=require("./routes/categoryrouter");
 const reviewRouter=require("./routes/reviewrouter");
+const preorderRouter=require("./routes/preorderrouter");
  const featuredcatagoryRouter=require("./routes/featuredcategoryrouter");
 // const subcategoryRouter=require("./routes/subcategoryrouter");
 
@@ -74,7 +75,7 @@ app.use("/user",userRouter)
 app.use("/category",categoryRouter)
 app.use("/review",reviewRouter)
 app.use("/featured-catagory",featuredcatagoryRouter)
-// app.use("/subcategory",subcategoryRouter)
+app.use("/preorder",preorderRouter)
 
 
 

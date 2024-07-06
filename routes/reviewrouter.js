@@ -1,10 +1,11 @@
-const router = express.Router()
+const express = require("express")
+const router = express.Router();
 const mongoose = require("mongoose");
 const fs = require("fs");
 const formidableMiddleware = require('express-formidable');
-
 const productSchema = require("../models/Product");
-// const checklogin = require("../helpers/authjwt");
+const checklogin = require("../helpers/authjwt");
+const isAdmin = require("../helpers/isAdmin");
 const userSchema = require("../models/User");
 const categorySchema = require("../models/Category");
 const reviewSchema = require("../models/Review");
@@ -19,11 +20,9 @@ const Review= new mongoose.model("Review",reviewSchema);
 //create a review :-
 
 
-router.post("/create-review",formidableMiddleware(), async(req, res) => {
+router.post("/create-review",checklogin,formidableMiddleware(), async(req, res) => {
    
         const { products, description,user  } = req.fields;
-      
- 
         const review= new Review({ ...req.fields })
     await review.save() 
     res.status(201).send({
@@ -39,13 +38,23 @@ router.post("/create-review",formidableMiddleware(), async(req, res) => {
     });
 //create a review:-
 //get all reviews:-
-router.get("/get-reviews",  async(req,res)=>{
-    const review = await Review.find().select('-photo').sort({createdAt:-1})
+router.get("/get-reviews",checklogin,isAdmin, async(req,res)=>{
+   try{
+    const { authorization}=req.headers
+    const review = await Review.find().populate("products","name").populate("user","firstName").select('-photo').sort("-createdAt")
        
-    res.send(review)
+    res.status(200).send({
+        message:"all reviews",
+        ssccess:true,
+        review:review
+    })
+   }
+   catch(err){
+console.log(err)
+   }
      
 });
-//get all reviews:-
+//get all reviews by product id:-
 //get data from db :-
 router.get("/get-reviews/:id", async (req, res) => {
 try{
@@ -53,7 +62,7 @@ try{
     const reviews= await Review.find({products:req.params.id}).populate("products","name").populate("user","firstName").select('-photo').sort("-createdAt")
 
     
-        res.send(reviews)
+     res.send(reviews)
 }
 catch(err){
     console.log(err)
@@ -61,7 +70,7 @@ catch(err){
   
 });
 //Deleting an order:-
-router.delete("/delete-review/:id", async (req, res) => {
+router.delete("/delete-review/:id",checklogin,isAdmin, async (req, res) => {
     const delatedReview= await Review.deleteOne({ _id: req.params.id }
 
     )

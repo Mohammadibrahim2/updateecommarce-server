@@ -2,7 +2,8 @@ const express = require("express")
 const router = express.Router()
 const mongoose = require("mongoose");
 const feturedcategorySchema= require('../models/FeaturedCategory')
-// const checklogin = require("../helpers/authjwt");
+const checklogin = require("../helpers/authjwt");
+const isAdmin = require("../helpers/isAdmin");
 const { default: slugify } = require("slugify");
 
 
@@ -10,7 +11,7 @@ const { default: slugify } = require("slugify");
 
 const FeaturedCategory= new mongoose.model("FeaturedCategory", feturedcategorySchema);
 
-router.post("/create-featured-category",async(req,res)=>{
+router.post("/create-featured-category",checklogin,isAdmin,async(req,res)=>{
 
     try{
         const {name}=req.body
@@ -46,7 +47,7 @@ router.get("/get-fetured-categories",async(req,res)=>{
 
     //delete fetcategy
 
-router.delete("/delete-featured-category/:id", async (req, res) => {
+router.delete("/delete-featured-category/:id",checklogin,isAdmin, async (req, res) => {
     try{
         console.log(req.params.id)
         const result= await FeaturedCategory.deleteOne({ _id: req.params.id }

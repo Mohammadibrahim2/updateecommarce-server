@@ -4,8 +4,9 @@ const mongoose= require("mongoose");
 const userSchema = require("../models/User");
 const bcrypt =require('bcryptjs')
 const jwt =require('jsonwebtoken');
-const dotenv =require("dotenv")
-// const checklogin = require("../helpers/authjwt");
+const dotenv =require("dotenv");
+const checklogin = require("../helpers/authjwt");
+const isAdmin = require("../helpers/isAdmin");
 
 dotenv.config()
  const User= new mongoose.model("User",userSchema);
@@ -47,7 +48,7 @@ router.post("/register",async(req,res)=>{
    
 
 //get data from db :-
-router.get("/",  async(req,res)=>{
+router.get("/",checklogin,isAdmin,  async(req,res)=>{
     const user = await User.find().select("-passwordHash").sort({createdAt:-1})
        
     res.send(user)
@@ -68,15 +69,44 @@ router.get("/own",async(req,res)=>{
 
 //admin
 
+
 router.get("/admin/:email",async(req,res)=>{
     const email=req.params.email
+try{
+    console.log(email)
     const user= await User.findOne({email})
   
-    isFinite(user.isadmin===true)
-    res.send({"isAdmin":user.isAdmin})
+    isFinite(user?.isAdmin===true)
+    res.send({"isAdmin":user?.isAdmin})
+}
+catch(err){
+    console.log(err)
+}
 })
+//makeAdmin 
+router.put("/makeAdmin/:id",checklogin,isAdmin,async(req,res)=>{
+   try{
+    console.log(req.params.id)
+    const makeAdmin=await User.findByIdAndUpdate(req.params.id,{
+       isAdmin:true
+     
+    },{new:true})
+    console.log("sob ses hoia gelo")
+    
+    res.status(200).send({
+        success:true,
+        message:"He is the Admin now ",
+        
+        
+    })
+   }
+   catch(err){
+   console.log(err)
+   }
+})
+
 //update data into db api is done :
-router.put("/update/:id",async(req,res)=>{
+router.put("/update/:id",checklogin,async(req,res)=>{
 console.log(req.params.id)
 console.log(req.body)
     const {firstName,lastName,email,password,phone}=req.body;
@@ -108,7 +138,7 @@ console.log(req.body)
 });
 
 //delete data from db :-
-router.delete("/:id",async(req,res)=>{
+router.delete("/:id",checklogin,isAdmin,async(req,res)=>{
  
     const user = await User.deleteOne({_id:req.params.id}
        

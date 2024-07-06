@@ -1,24 +1,26 @@
- express = require("express")
+const express = require("express")
+ const app=express()
 const router = express.Router()
 const mongoose = require("mongoose");
 const fs = require("fs");
 const formidableMiddleware = require('express-formidable');
 const { default: slugify } = require("slugify");
-
+const cors=require('cors')
 const SSLCommerzPayment = require('sslcommerz-lts')
 const productSchema = require("../models/Product");
-// const checklogin = require("../helpers/authjwt");
+const checklogin = require("../helpers/authjwt");
+const isAdmin = require("../helpers/isAdmin");
 const feturedcategorySchema= require('../models/FeaturedCategory')
 const categorySchema = require("../models/Category");
 const orderSchema = require("../models/Order");
-const { ObjectId } = require("mongodb");
+const { ObjectId, Admin } = require("mongodb");
 
 
 const Product = new mongoose.model("Product", productSchema);
 const Order= new mongoose.model("Order",orderSchema);
 const Category= new mongoose.model("Category",categorySchema);
 const FeaturedCategory= new mongoose.model("FeaturedCategory", feturedcategorySchema);
-
+app.use(cors());
 //payment getway:-
 const store_id = 'fishn66771ca59bfab'
 const store_passwd = 'fishn66771ca59bfab@ssl'
@@ -26,8 +28,8 @@ const is_live = false //true for live, false for sandbox
   //payment getway:-
 
 //successfully done the create router:
-router.post("/create-product",formidableMiddleware(), async(req, res) => {
-// console.log(req)
+router.post("/create-product",checklogin,isAdmin,formidableMiddleware(), async(req, res) => {
+
     const {  quantity,name, description, price,brand,category,featuredCategory} = req.fields;
     const { photo } = req.files;
     switch (true) {
@@ -71,6 +73,13 @@ message:"products is not created"
 
 //get data from db :-
 router.get("/get-product", async (req, res) => {
+    const products = await Product.find().populate("category", "name").select('-photo').sort("-createdAt")
+    const countProducts=await Product.countDocuments({})
+    
+        res.send({products,countProducts})
+  
+});
+router.get("/admin/get-product",checklogin,isAdmin,async (req, res) => {
     const products = await Product.find().populate("category", "name").select('-photo').sort("-createdAt")
     const countProducts=await Product.countDocuments({})
     
@@ -224,7 +233,7 @@ router.post("/product-filter", async (req, res) => {
 })
 
 //update data into db :
-router.put("/:id", async (req, res) => {
+router.put("/:id",checklogin,isAdmin, async (req, res) => {
     const product = await Product.findByIdAndUpdate({ _id: req.params.id },
         { subcategory: req.body.subcategory },
         { useFindAndModidy: false }
@@ -238,7 +247,7 @@ router.put("/:id", async (req, res) => {
 });
 
 // deldete data from db is done :-
-router.delete("/delete-product/:id", async (req, res) => {
+router.delete("/delete-product/:id",checklogin,isAdmin, async (req, res) => {
     const product= await Product.deleteOne({ _id: req.params.id }
 
     )
@@ -270,7 +279,7 @@ router.get("/featured-product/:slug",async(req,res)=>{
 })
 //payment 
 //get token
-router.post("/order",async(req,res)=>{
+router.post("/order",checklogin,async(req,res)=>{
     const tran_id=new ObjectId().toString()
 
     try{

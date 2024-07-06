@@ -1,4 +1,5 @@
-const router = express.Router()
+const express = require("express")
+const router = express.Router();
 const mongoose = require("mongoose");
 const fs = require("fs");
 const formidableMiddleware = require('express-formidable');
@@ -11,7 +12,8 @@ const userSchema = require("../models/User");
 const categorySchema = require("../models/Category");
 const orderSchema = require("../models/Order");
 const { ObjectId } = require("mongodb");
-
+const checklogin = require("../helpers/authjwt");
+const isAdmin = require("../helpers/isAdmin");
 
 const Product = new mongoose.model("Product", productSchema);
 const Order= new mongoose.model("Order",orderSchema);
@@ -20,10 +22,10 @@ const User= new mongoose.model("User",userSchema);
 
 
 //get data from db :-
-router.get("/get-userOrder/:id", async (req, res) => {
+router.get("/get-userOrder/:id",checklogin, async (req, res) => {
 try{
         
-    const orders= await Order.findOne({buyer:req.params.id}).populate("products","name").populate("buyer","firstName").select('-photo').sort("-createdAt")
+    const orders= await Order.findOne({buyer:req.params.id}).populate("products","name").populate("buyer","firstName","lastName").select('-photo').sort("-createdAt")
 
     
         res.send({orders})
@@ -34,7 +36,7 @@ catch(err){
   
 });
 //Deleting an order:-
-router.delete("/delete-order/:id", async (req, res) => {
+router.delete("/delete-order/:id",checklogin,isAdmin, async (req, res) => {
    try{
     console.log(req.params.id)
     const order= await Order.deleteOne({ _id:req.params.id })
@@ -48,7 +50,7 @@ router.delete("/delete-order/:id", async (req, res) => {
 
 
 //get all orders:-
-router.get("/",async(req,res)=>{
+router.get("/",checklogin,isAdmin,async(req,res)=>{
     
     const result=await Order.find() 
     res.send(result)
