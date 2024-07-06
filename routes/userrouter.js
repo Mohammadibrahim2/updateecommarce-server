@@ -106,7 +106,7 @@ router.put("/makeAdmin/:id",checklogin,isAdmin,async(req,res)=>{
 })
 
 //update data into db api is done :
-router.put("/update/:id",checklogin,async(req,res)=>{
+router.put("/update/:id",async(req,res)=>{
 console.log(req.params.id)
 console.log(req.body)
     const {firstName,lastName,email,password,phone}=req.body;
